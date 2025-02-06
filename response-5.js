@@ -1,34 +1,92 @@
-function findMaxSubarraySum(arr) {
-  if (!arr || arr.length === 0) {
-    return { maxSum: 0, start: -1, end: -1 };
+function dijkstraShortestPath(graph, start, end) {
+  if (
+    typeof graph !== "object" ||
+    graph === null ||
+    typeof start !== "string" ||
+    typeof end !== "string"
+  ) {
+    return "Invalid input";
   }
 
-  if (arr.length === 1) {
-    return { maxSum: arr[0], start: 0, end: 0 };
+  if (!graph.hasOwnProperty(start) || !graph.hasOwnProperty(end)) {
+    return "Invalid input";
   }
 
-  let maxSum = arr[0];
-  let currentSum = arr[0];
-  let start = 0;
-  let end = 0;
-  let tempStart = 0;
+  const distances = {};
+  const previous = {};
+  const queue = new Set();
 
-  for (let i = 1; i < arr.length; i++) {
-    if (currentSum < 0) {
-      currentSum = arr[i];
-      tempStart = i;
-    } else {
-      currentSum += arr[i];
+  // Initialize distances and queue
+  for (let node in graph) {
+    if (!graph.hasOwnProperty(node) || typeof node !== "string") {
+      return "Invalid input";
     }
 
-    if (currentSum > maxSum) {
-      maxSum = currentSum;
-      start = tempStart;
-      end = i;
+    distances[node] = node === start ? 0 : Infinity;
+    previous[node] = null;
+    queue.add(node);
+  }
+
+  while (queue.size > 0) {
+    let currentNode = null;
+    let smallestDistance = Infinity;
+
+    // Find the node with the smallest distance
+    for (let node of queue) {
+      if (distances[node] < smallestDistance) {
+        smallestDistance = distances[node];
+        currentNode = node;
+      }
+    }
+
+    // If smallestDistance is Infinity, remaining nodes are unreachable
+    if (smallestDistance === Infinity || currentNode === null) {
+      break;
+    }
+
+    queue.delete(currentNode);
+
+    if (currentNode === end) {
+      break;
+    }
+
+    // Update distances for neighbours
+    for (let neighbor in graph[currentNode]) {
+      if (
+        !graph[currentNode].hasOwnProperty(neighbor) ||
+        typeof graph[currentNode][neighbor] !== "number"
+      ) {
+        return "Invalid input";
+      }
+
+      let weight = graph[currentNode][neighbor];
+      let alt = distances[currentNode] + weight;
+
+      if (alt < distances[neighbor]) {
+        distances[neighbor] = alt;
+        previous[neighbor] = currentNode;
+      }
     }
   }
 
-  return { maxSum: maxSum, start: start, end: end };
+  // If the end node is still Infinity, there's no path
+  if (distances[end] === Infinity) {
+    return -1;
+  }
+
+  // Reconstruct the shortest path
+  let path = [];
+  let current = end;
+  while (previous[current] !== null) {
+    path.unshift(current);
+    current = previous[current];
+  }
+
+  if (start === end || path.length) {
+    path.unshift(start);
+  }
+
+  return { distance: distances[end], path: path };
 }
 
-module.exports = findMaxSubarraySum;
+module.exports = dijkstraShortestPath;
